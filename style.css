@@ -304,6 +304,176 @@ html, body {
 #tooltip.hidden { display: none; }
 #tooltip strong { color: #93c5fd; }
 
+/* ── Column mapping modal ── */
+#col-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#col-modal.hidden { display: none; }
+
+#col-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(3px);
+}
+
+#col-box {
+  position: relative;
+  background: #1a1d27;
+  border: 1px solid #2d3148;
+  border-radius: 14px;
+  width: 560px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+
+#col-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #2d3148;
+}
+
+#col-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#col-filename {
+  font-size: 12px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Preview table */
+#col-preview-wrap {
+  padding: 12px 20px;
+  overflow-x: auto;
+  border-bottom: 1px solid #2d3148;
+  max-height: 130px;
+}
+
+#col-preview {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+#col-preview th {
+  background: #23263a;
+  color: #94a3b8;
+  font-weight: 600;
+  padding: 4px 10px;
+  text-align: left;
+  border-bottom: 1px solid #2d3148;
+}
+
+#col-preview td {
+  color: #cbd5e1;
+  padding: 3px 10px;
+  border-bottom: 1px solid #1e2133;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Column selectors */
+#col-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 16px 20px;
+}
+
+.col-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.col-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.col-field .req {
+  font-size: 10px;
+  background: #3b5bdb33;
+  color: #93c5fd;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.col-field .opt {
+  font-size: 10px;
+  background: #10b98122;
+  color: #6ee7b7;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.col-field select {
+  background: #0f1117;
+  border: 1px solid #2d3148;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 13px;
+  padding: 8px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.col-field select:focus { border-color: #3b5bdb; }
+
+#col-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid #2d3148;
+}
+
+#col-cancel {
+  background: none;
+  border: 1px solid #2d3148;
+  color: #94a3b8;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+#col-cancel:hover { border-color: #94a3b8; color: #e2e8f0; }
+
+#col-confirm {
+  background: #3b5bdb;
+  border: none;
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+#col-confirm:hover { background: #4c6ef5; }
+
 /* ── MapLibre overrides ── */
-.maplibregl-ctrl-bottom-right,
+.maplibregl-ctrl-attrib { display: none; }
 .maplibregl-ctrl-bottom-left { display: none; }

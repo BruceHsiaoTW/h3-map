@@ -60,6 +60,45 @@
   <!-- Tooltip -->
   <div id="tooltip" class="hidden"></div>
 
+  <!-- Column mapping modal -->
+  <div id="col-modal" class="hidden">
+    <div id="col-backdrop"></div>
+    <div id="col-box">
+      <div id="col-header">
+        <span id="col-title">設定欄位對應</span>
+        <span id="col-filename"></span>
+      </div>
+
+      <div id="col-preview-wrap">
+        <table id="col-preview"></table>
+      </div>
+
+      <div id="col-grid">
+        <div class="col-field">
+          <label>緯度 <span class="req">必填</span></label>
+          <select id="col-lat"></select>
+        </div>
+        <div class="col-field">
+          <label>經度 <span class="req">必填</span></label>
+          <select id="col-lon"></select>
+        </div>
+        <div class="col-field">
+          <label>名稱 <span class="opt">合併</span></label>
+          <select id="col-name"></select>
+        </div>
+        <div class="col-field">
+          <label>數值 <span class="opt">加總</span></label>
+          <select id="col-value"></select>
+        </div>
+      </div>
+
+      <div id="col-footer">
+        <button id="col-cancel">取消</button>
+        <button id="col-confirm">確認匯入</button>
+      </div>
+    </div>
+  </div>
+
   </div><!-- /app -->
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>

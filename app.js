@@ -62,6 +62,7 @@ const map = new maplibregl.Map({
 
 map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
 map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+window.__map = map; // expose for debugging
 
 // ── UI refs ────────────────────────────────────────────────────────────────
 const csvInput     = document.getElementById('csv-input');
@@ -86,20 +87,19 @@ function loadCsv(file) {
   Papa.parse(file, {
     header: true,
     skipEmptyLines: true,
-    complete({ data, meta }) {
-      const cols = detectLatLon(meta.fields || []);
-      if (!cols) {
-        alert(`無法在 "${file.name}" 中偵測到經緯度欄位。\n請確認有 lat/lon、latitude/longitude、y/x 等欄位名稱。`);
-        return;
-      }
-      const rows = data
-        .map(r => ({ lat: parseFloat(r[cols.lat]), lon: parseFloat(r[cols.lon]) }))
-        .filter(r => isFinite(r.lat) && isFinite(r.lon));
+    async complete({ data, meta }) {
+      if (!data.length) { alert(`"${file.name}" 無資料。`); return; }
+      const headers = meta.fields || [];
+      const cols = await showColumnModal(file.name, headers, data);
+      if (!cols) return; // user cancelled
 
-      if (rows.length === 0) {
-        alert(`"${file.name}" 中沒有有效座標資料。`);
-        return;
-      }
+      const rows = data.filter(r => {
+        const lat = parseFloat(r[cols.lat]);
+        const lon = parseFloat(r[cols.lon]);
+        return isFinite(lat) && isFinite(lon);
+      });
+
+      if (rows.length === 0) { alert(`"${file.name}" 中沒有有效座標資料。`); return; }
 
       const id = nextId++;
       const color = PALETTE[id % PALETTE.length];
@@ -107,6 +107,7 @@ function loadCsv(file) {
         id,
         name: file.name.replace(/\.csv$/i, ''),
         rows,
+        cols,
         color,
         visible: true,
         sourceId: `h3-src-${id}`,
@@ -116,38 +117,132 @@ function loadCsv(file) {
       addLayer(ds);
       renderSidebar();
     },
-    error(err) {
-      alert(`解析 "${file.name}" 時發生錯誤：${err.message}`);
-    },
+    error(err) { alert(`解析 "${file.name}" 時發生錯誤：${err.message}`); },
   });
 }
 
-function detectLatLon(fields) {
-  const norm = f => f.toLowerCase().trim();
-  const LAT = ['lat', 'latitude', 'y'];
-  const LON = ['lon', 'lng', 'longitude', 'x'];
-  const latCol = fields.find(f => LAT.includes(norm(f)));
-  const lonCol = fields.find(f => LON.includes(norm(f)));
-  return latCol && lonCol ? { lat: latCol, lon: lonCol } : null;
+// ── Column mapping modal ──────────────────────────────────────────────────
+function showColumnModal(filename, headers, data) {
+  return new Promise((resolve) => {
+    const modal    = document.getElementById('col-modal');
+    const backdrop = document.getElementById('col-backdrop');
+    const selLat   = document.getElementById('col-lat');
+    const selLon   = document.getElementById('col-lon');
+    const selName  = document.getElementById('col-name');
+    const selValue = document.getElementById('col-value');
+    const btnOk    = document.getElementById('col-confirm');
+    const btnCancel= document.getElementById('col-cancel');
+    const fnEl     = document.getElementById('col-filename');
+    const preview  = document.getElementById('col-preview');
+
+    fnEl.textContent = filename;
+
+    // Auto-detect helpers
+    const norm = s => s.toLowerCase().trim();
+    const guess = (keys) => headers.find(h => keys.includes(norm(h))) || '';
+    const latGuess = guess(['lat','latitude','y']);
+    const lonGuess = guess(['lon','lng','longitude','x']);
+
+    // Build select options
+    function fillSelect(el, withEmpty) {
+      el.innerHTML = '';
+      if (withEmpty) el.innerHTML = '<option value="">— 不使用 —</option>';
+      headers.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h; opt.textContent = h;
+        el.appendChild(opt);
+      });
+    }
+    fillSelect(selLat, false);
+    fillSelect(selLon, false);
+    fillSelect(selName, true);
+    fillSelect(selValue, true);
+
+    if (latGuess) selLat.value = latGuess;
+    if (lonGuess) selLon.value = lonGuess;
+
+    // Preview table (first 3 rows)
+    const previewRows = data.slice(0, 3);
+    preview.innerHTML =
+      `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>` +
+      `<tbody>${previewRows.map(r =>
+        `<tr>${headers.map(h => `<td>${r[h] ?? ''}</td>`).join('')}</tr>`
+      ).join('')}</tbody>`;
+
+    modal.classList.remove('hidden');
+
+    function close(result) {
+      modal.classList.add('hidden');
+      btnOk.removeEventListener('click', onOk);
+      btnCancel.removeEventListener('click', onCancel);
+      backdrop.removeEventListener('click', onCancel);
+      resolve(result);
+    }
+
+    function onOk() {
+      if (!selLat.value || !selLon.value) {
+        selLat.style.borderColor = selLat.value ? '' : '#f87171';
+        selLon.style.borderColor = selLon.value ? '' : '#f87171';
+        return;
+      }
+      close({
+        lat:   selLat.value,
+        lon:   selLon.value,
+        name:  selName.value  || null,
+        value: selValue.value || null,
+      });
+    }
+    function onCancel() { close(null); }
+
+    btnOk.addEventListener('click', onOk);
+    btnCancel.addEventListener('click', onCancel);
+    backdrop.addEventListener('click', onCancel);
+  });
 }
 
 // ── H3 layer management ───────────────────────────────────────────────────
-function computeGeoJSON(rows, res) {
-  const counts = new Map();
-  for (const { lat, lon } of rows) {
+function computeGeoJSON(rows, res, cols) {
+  const cells = new Map(); // cellId → { count, valueSum, names }
+  for (const row of rows) {
+    const lat = parseFloat(row[cols.lat]);
+    const lon = parseFloat(row[cols.lon]);
+    if (!isFinite(lat) || !isFinite(lon)) continue;
     const cell = latLngToCell(lat, lon, res);
-    counts.set(cell, (counts.get(cell) ?? 0) + 1);
+    if (!cells.has(cell)) cells.set(cell, { count: 0, valueSum: 0, names: [] });
+    const c = cells.get(cell);
+    c.count++;
+    if (cols.value) {
+      const v = parseFloat(row[cols.value]);
+      if (isFinite(v)) c.valueSum += v;
+    }
+    if (cols.name) {
+      const n = String(row[cols.name] ?? '').trim();
+      if (n) c.names.push(n);
+    }
   }
-  const max = Math.max(...counts.values(), 1);
+
+  const metricFn = cols.value ? c => c.valueSum : c => c.count;
+  const max = Math.max(...[...cells.values()].map(metricFn), 1);
+
   const features = [];
-  for (const [cell, count] of counts) {
+  for (const [cell, c] of cells) {
     const boundary = cellToBoundary(cell);
+    // Deduplicate and join names
+    const namesStr = cols.name
+      ? [...new Set(c.names)].slice(0, 8).join(', ')
+      : '';
     features.push({
       type: 'Feature',
-      properties: { cell, count, opacity: 0.3 + 0.55 * (count / max) },
+      properties: {
+        cell,
+        count: c.count,
+        valueSum: cols.value ? +c.valueSum.toFixed(4) : 0,
+        names: namesStr,
+        opacity: 0.25 + 0.6 * (metricFn(c) / max),
+      },
       geometry: {
         type: 'Polygon',
-        coordinates: [[...boundary.map(([lat, lon]) => [lon, lat]), [boundary[0][1], boundary[0][0]]]],
+        coordinates: [[...boundary.map(([la, lo]) => [lo, la]), [boundary[0][1], boundary[0][0]]]],
       },
     });
   }
@@ -159,7 +254,7 @@ function addLayer(ds) {
     map.once('load', () => addLayer(ds));
     return;
   }
-  const geojson = computeGeoJSON(ds.rows, resolution);
+  const geojson = computeGeoJSON(ds.rows, resolution, ds.cols);
   map.addSource(ds.sourceId, { type: 'geojson', data: geojson });
   map.addLayer({
     id: ds.layerId,
@@ -175,8 +270,11 @@ function addLayer(ds) {
   // Hover tooltip
   map.on('mousemove', ds.layerId, (e) => {
     map.getCanvas().style.cursor = 'pointer';
-    const props = e.features[0].properties;
-    tooltip.innerHTML = `<strong>${ds.name}</strong><br>Cell: ${props.cell}<br>點數: ${props.count}`;
+    const p = e.features[0].properties;
+    let html = `<strong>${ds.name}</strong><br>點數: ${p.count}`;
+    if (ds.cols.value) html += `<br>加總 (${ds.cols.value}): ${p.valueSum.toLocaleString()}`;
+    if (ds.cols.name && p.names) html += `<br>名稱: ${p.names}`;
+    tooltip.innerHTML = html;
     tooltip.classList.remove('hidden');
   });
   map.on('mouseleave', ds.layerId, () => {
@@ -197,7 +295,7 @@ function removeLayer(ds) {
 function rebuildAllLayers() {
   for (const ds of datasets.values()) {
     if (map.getSource(ds.sourceId)) {
-      map.getSource(ds.sourceId).setData(computeGeoJSON(ds.rows, resolution));
+      map.getSource(ds.sourceId).setData(computeGeoJSON(ds.rows, resolution, ds.cols));
     }
   }
 }
@@ -218,7 +316,7 @@ function renderSidebar() {
       <span class="ds-dot" style="background:${ds.color}"></span>
       <div class="ds-info">
         <div class="ds-name" title="${ds.name}">${ds.name}</div>
-        <div class="ds-count">${ds.rows.length.toLocaleString()} 筆</div>
+        <div class="ds-count">${ds.rows.length.toLocaleString()} 筆${ds.cols.value ? ` · Σ ${ds.cols.value}` : ''}${ds.cols.name ? ` · ${ds.cols.name}` : ''}</div>
       </div>
       <div class="ds-actions">
         <button class="ds-btn vis-btn ${ds.visible ? '' : 'hidden-ds'}" data-id="${ds.id}" title="${ds.visible ? '隱藏' : '顯示'}">
