@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>H3 地理數據可視化</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside id="sidebar" class="open">
+    <div id="sidebar-header">
+      <h1>H3 地圖</h1>
+      <button id="sidebar-toggle" title="收合側欄">‹</button>
+    </div>
+
+    <div id="sidebar-body">
+      <label id="upload-btn" class="btn-primary">
+        + 上傳 CSV
+        <input type="file" id="csv-input" accept=".csv" multiple hidden />
+      </label>
+
+      <div id="dataset-list"></div>
+
+      <div id="sidebar-footer">
+        <p class="hint">支援欄位：lat/lon、latitude/longitude、lat/lng、y/x</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Map -->
+  <div id="map"></div>
+
+  <!-- Resolution badge -->
+  <div id="res-badge">H3 解析度：<span id="res-value">7</span></div>
+
+  <!-- Tooltip -->
+  <div id="tooltip" class="hidden"></div>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
