@@ -8,9 +8,102 @@ html, body {
   overflow: hidden;
 }
 
-/* ── Layout ── */
-body { display: flex; }
+/* ── Login overlay ── */
+#login-overlay {
+  position: fixed;
+  inset: 0;
+  background: #0f1117;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
 
+#login-box {
+  background: #1a1d27;
+  border: 1px solid #2d3148;
+  border-radius: 16px;
+  padding: 40px 44px;
+  width: 340px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+#login-box h2 {
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+#login-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+#login-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+#login-form label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+#login-form input {
+  background: #0f1117;
+  border: 1px solid #2d3148;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 14px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+#login-form input:focus { border-color: #3b5bdb; }
+
+#login-error {
+  font-size: 12px;
+  color: #f87171;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+#login-submit {
+  width: 100%;
+  padding: 11px;
+  background: #3b5bdb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 0.15s;
+}
+#login-submit:hover { background: #4c6ef5; }
+#login-submit:disabled { background: #334155; cursor: not-allowed; }
+
+/* ── App wrapper ── */
+#app {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+#app.hidden { display: none; }
+#login-overlay.hidden { display: none; }
+#login-error.hidden { display: none; }
+
+/* ── Layout ── */
 #map {
   flex: 1;
   height: 100vh;

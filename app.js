@@ -1,5 +1,44 @@
 import { latLngToCell, cellToBoundary } from 'https://esm.sh/h3-js@4.1.0';
 
+// ── Auth ───────────────────────────────────────────────────────────────────
+const AUTH_USER = 'bruce';
+const AUTH_HASH = '90fdf0644165a2e6ac512c080235d76e63a039ff80970f2371a51a0b1913ba67';
+const SESSION_KEY = 'h3map_auth';
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function showApp() {
+  document.getElementById('login-overlay').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+}
+
+if (sessionStorage.getItem(SESSION_KEY) === '1') {
+  showApp();
+} else {
+  const form   = document.getElementById('login-form');
+  const errEl  = document.getElementById('login-error');
+  const btn    = document.getElementById('login-submit');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    const user = document.getElementById('l-user').value.trim();
+    const pass = document.getElementById('l-pass').value;
+    const hash = await sha256(pass);
+    if (user === AUTH_USER && hash === AUTH_HASH) {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      showApp();
+    } else {
+      errEl.classList.remove('hidden');
+      btn.disabled = false;
+      document.getElementById('l-pass').value = '';
+    }
+  });
+}
+
 // ── Constants ──────────────────────────────────────────────────────────────
 const PALETTE = [
   '#3b82f6', '#f59e0b', '#10b981', '#ef4444',

@@ -8,6 +8,28 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Login overlay -->
+  <div id="login-overlay">
+    <div id="login-box">
+      <h2>H3 地圖</h2>
+      <p id="login-subtitle">請登入以繼續</p>
+      <form id="login-form" autocomplete="off">
+        <div class="field">
+          <label for="l-user">帳號</label>
+          <input id="l-user" type="text" autocomplete="username" placeholder="Username" />
+        </div>
+        <div class="field">
+          <label for="l-pass">密碼</label>
+          <input id="l-pass" type="password" autocomplete="current-password" placeholder="Password" />
+        </div>
+        <p id="login-error" class="hidden">帳號或密碼錯誤</p>
+        <button type="submit" id="login-submit">登入</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- App (hidden until logged in) -->
+  <div id="app" class="hidden">
   <!-- Sidebar -->
   <aside id="sidebar" class="open">
     <div id="sidebar-header">
@@ -37,6 +59,8 @@
 
   <!-- Tooltip -->
   <div id="tooltip" class="hidden"></div>
+
+  </div><!-- /app -->
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
